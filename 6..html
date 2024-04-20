@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<style>
+table {
+  width: 100%;
+  border: 1px solid black;
+  background-color: #f2f2f2; /* Set the background color */
+}
+
+th,
+td {
+  border: 1px solid black;
+  padding: 8px;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.canvas-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+</style>
+<body>
+
+<h2>A basic HTML table</h2>
+
+<table>
+  <tr>
+    <th>Item Name</th>
+    <th>Price</th>
+    <th>Condition</th>
+  </tr>
+  <tr class="row" data-item="Book" data-price="HKD30" data-condition="80% New">
+    <td>Book</td>
+    <td>HKD30</td>
+    <td>80% New</td>
+  </tr>
+  <tr class="row" data-item="Bag" data-price="HKD20" data-condition="99% New">
+    <td>Bag</td>
+    <td>HKD20</td>
+    <td>99% New</td>
+  </tr>
+</table>
+
+<p>Used goods market on campus</p>
+
+<div class="overlay"></div>
+
+<script>
+  // Firework particle class
+  class FireworkParticle {
+    constructor(x, y, color) {
+      this.x = x;
+      this.y = y;
+      this.color = color;
+      this.radius = 2;
+      this.velocity = {
+        x: Math.random() * 6 - 3,
+        y: Math.random() * 6 - 3
+      };
+      this.alpha = 1;
+    }
+
+    update() {
+      this.x += this.velocity.x;
+      this.y += this.velocity.y;
+      this.alpha -= 0.01;
+    }
+
+    draw(ctx) {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+      ctx.fillStyle = this.color;
+      ctx.globalAlpha = this.alpha;
+      ctx.fill();
+    }
+
+    get isFadedOut() {
+      return this.alpha <= 0;
+    }
+  }
+
+  // Create a firework
+  function createFirework(x, y) {
+    const firework = new FireworkParticle(x, y, getRandomColor());
+
+    // Create explosion particles
+    const particles = [];
+    for (let i = 0; i < 50; i++) {
+      const particle = new FireworkParticle(x, y, firework.color);
+      particles.push(particle);
+    }
+
+    // Get the canvas element
+    const canvas = document.createElement("canvas");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const ctx = canvas.getContext("2d");
+
+    // Update and draw particles
+    function updateParticles() {
+      particles.forEach(particle => {
+        particle.update();
+        particle.draw(ctx);
+      });
+
+      particles.forEach((particle, index) => {
+        if (particle.isFadedOut) {
+          particles.splice(index, 1);
+        }
+      });
+    }
+
+    // Animation loop
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      firework.update();
+      firework.draw(ctx);
+      updateParticles();
+
+      if (!firework.isFadedOut || particles.length > 0) {
+        requestAnimationFrame(animate);
+      } else {
+        document.body.removeChild(canvas);
+      }
+    }
+
+    animate();
+
+    // Add canvas to the overlay
+    const overlay = document.querySelector(".overlay");
+    overlay.appendChild(canvas);
+  }
+
+  // Helper function to get random color
+  function getRandomColor() {
+    const colors = ["#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF"];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+
+  // Add click event listeners to table rows
+  const rows = document.querySelectorAll(".row");
+  rows.forEach(row => {
+    row.addEventListener("click", event => {
+      const { clientX, clientY } = event;
+      createFirework(clientX, clientY);
+    });
+  });
+</script>
+
+</body>
+</html>
